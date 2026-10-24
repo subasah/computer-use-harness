@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nexus-computer-use-sandbox:latest
+    container_name: nexus_sandbox_runtime
+    ports:
+      - "5900:5900"   # VNC Port
+      - "6080:6080"   # noVNC Browser Port (http://localhost:6080/vnc.html)
+    volumes:
+      - ./workspace:/home/sandboxuser/workspace
+    environment:
+      - DISPLAY=:99
+      - RESOLUTION=1024x768x24
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4096M
+    restart: unless-stopped

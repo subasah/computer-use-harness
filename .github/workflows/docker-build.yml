@@ -1,0 +1,39 @@
+name: Docker Sandbox Build & Validation
+
+on:
+  push:
+    paths:
+      - 'Dockerfile'
+      - 'docker/**'
+      - '.github/workflows/docker-build.yml'
+  workflow_dispatch:
+
+jobs:
+  docker:
+    name: Build & Smoke Test Sandbox Container
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Sandbox Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          tags: nexus-computer-use-sandbox:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Container Launch & Xvfb Display Smoke Test
+        run: |
+          docker run -d --name test_sandbox -p 5900:5900 -p 6080:6080 nexus-computer-use-sandbox:latest
+          sleep 5
+          docker exec test_sandbox xdotool --version
+          docker exec test_sandbox scrot --version || true
+          docker stop test_sandbox

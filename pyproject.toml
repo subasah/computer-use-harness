@@ -1,0 +1,88 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "computer-use-harness"
+version = "0.1.0"
+description = "Production-grade Computer Use Agent Harness with Sandboxed Execution, Model Context Protocol (MCP) Integration, and Multi-Modal Verification"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Suba Sah", email = "sah.suba@gmail.com" }
+]
+keywords = [
+    "computer-use",
+    "ai-agents",
+    "mcp",
+    "model-context-protocol",
+    "sandbox",
+    "harness-engineering",
+    "anthropic",
+    "claude",
+    "storytold"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "click>=8.1.7",
+    "rich>=13.7.0",
+    "pyyaml>=6.0.1",
+    "pillow>=10.2.0",
+    "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+all = [
+    "anthropic>=0.40.0",
+    "openai>=1.30.0",
+    "google-genai>=0.1.0",
+    "psutil>=5.9.8",
+]
+dev = [
+    "pytest>=8.1.0",
+    "pytest-asyncio>=0.23.6",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.4.0",
+    "mypy>=1.9.0",
+    "types-pyyaml>=6.0.12",
+    "types-Pillow>=10.2.0",
+]
+
+[project.scripts]
+nexus = "harness.cli:main"
+cuh = "harness.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["harness"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
