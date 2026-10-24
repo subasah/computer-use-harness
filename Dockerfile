@@ -33,8 +33,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     procps \
     && rm -rf /var/lib/apt/lists/*
 
-# Create unprivileged sandbox user
-RUN useradd -m -s /bin/bash -u 1000 sandboxuser && \
+# Create unprivileged sandbox user (remove default noble ubuntu user if present)
+RUN (userdel -r ubuntu 2>/dev/null || true) && \
+    useradd -m -s /bin/bash -u 1000 sandboxuser && \
     echo "sandboxuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Create workspace and log directories
