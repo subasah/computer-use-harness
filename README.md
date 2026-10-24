@@ -239,8 +239,3 @@ NexusCUH includes enterprise-grade GitHub Actions workflows:
 
 Designed and engineered by **[Suba Sah](https://github.com/subasah)**.  
 Licensed under the **Apache License 2.0**.
-
-Inspiration and technical foundations from:
-- [Harness Engineering for Computer Use (O'Reilly Live Course)](https://github.com/sajal2692/harness-engineering-computer-use-oreilly-course) by Sajal Sharma.
-- [StoryTold Creative Application Ecosystem](https://github.com/storytold/).
-- [Anthropic Model Context Protocol (MCP) Standard](https://modelcontextprotocol.io/).
