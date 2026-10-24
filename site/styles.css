@@ -826,6 +826,28 @@ a:hover {
   font-size: 0.84rem;
   color: #38bdf8;
   overflow-x: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.arch-code pre code, .qs-card pre code {
+  white-space: pre;
+  display: block;
+  font-family: inherit;
+  font-size: inherit;
+}
+.arch-code pre::-webkit-scrollbar, .qs-card pre::-webkit-scrollbar {
+  height: 6px;
+}
+.arch-code pre::-webkit-scrollbar-track, .qs-card pre::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+.arch-code pre::-webkit-scrollbar-thumb, .qs-card pre::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.4);
+  border-radius: 3px;
+}
+.arch-code pre::-webkit-scrollbar-thumb:hover, .qs-card pre::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.7);
 }
 
 /* Builder Section */
@@ -968,8 +990,10 @@ a:hover {
 /* Quickstart Cards */
 .quickstart-steps {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 .qs-card {
   background: var(--bg-card);
@@ -979,6 +1003,10 @@ a:hover {
   position: relative;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .qs-num {
   position: absolute;
@@ -1059,6 +1087,24 @@ a:hover {
  * RESPONSIVE MEDIA QUERIES (BREAKPOINTS)
  * ============================================================================== */
 
+/* Laptop / Standard Desktop Screens (<= 1240px) */
+@media (max-width: 1240px) {
+  .quickstart-steps {
+    grid-template-columns: 1fr;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+  .tri-pane-grid {
+    grid-template-columns: 1fr;
+  }
+  .pane-card {
+    height: 440px;
+  }
+  .hero-metrics-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* Tablet / Medium Screens (<= 992px) */
 @media (max-width: 992px) {
   .hero-metrics-bar {
@@ -1075,6 +1121,7 @@ a:hover {
   }
   .quickstart-steps {
     grid-template-columns: 1fr;
+    max-width: 100%;
   }
   .tri-pane-grid {
     grid-template-columns: 1fr;
