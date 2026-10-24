@@ -12,10 +12,13 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="dark-theme">
+  <!-- Reading Progress Bar -->
+  <div class="scroll-progress-bar" id="progressBar"></div>
+
   <!-- Navigation Bar -->
-  <header class="navbar">
+  <header class="navbar" id="topNavbar">
     <div class="nav-container">
-      <div class="brand">
+      <a href="#" class="brand" aria-label="NexusCUH Home">
         <div class="brand-logo">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
@@ -26,14 +29,23 @@
         </div>
         <span class="brand-name">Nexus<span class="brand-highlight">CUH</span></span>
         <span class="badge badge-primary">v0.1.0</span>
-      </div>
-      <nav class="nav-links">
+      </a>
+
+      <!-- Mobile Hamburger Button -->
+      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+      </button>
+
+      <!-- Desktop & Mobile Navigation Links -->
+      <nav class="nav-links" id="navLinks">
         <a href="#simulator" class="nav-link">Live Simulator</a>
         <a href="#architecture" class="nav-link">Architecture</a>
         <a href="#builder" class="nav-link">Config Builder</a>
         <a href="#benchmarks" class="nav-link">Benchmarks</a>
         <a href="#docs" class="nav-link">Documentation</a>
-        <a href="https://github.com/subasah/computer-use-harness" target="_blank" class="nav-btn github-btn">
+        <a href="https://github.com/subasah/computer-use-harness" target="_blank" rel="noopener noreferrer" class="nav-btn github-btn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
           </svg>
@@ -62,14 +74,14 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="5 3 19 12 5 21 5 3"></polygon>
           </svg>
-          Launch Interactive Simulator
+          <span>Launch Simulator</span>
         </a>
         <a href="#builder" class="btn btn-secondary">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
           </svg>
-          Config Generator
+          <span>Config Generator</span>
         </a>
         <a href="#architecture" class="btn btn-outline">Architecture Guide</a>
       </div>
@@ -104,10 +116,21 @@
         </p>
       </div>
 
+      <!-- Simulator View Filter Pills (Responsive on Mobile/Desktop) -->
+      <div class="sim-view-filter-bar">
+        <span class="filter-label">Display Mode:</span>
+        <div class="filter-pills" id="simViewPills">
+          <button class="view-pill active" data-view="all">All 3 Panes</button>
+          <button class="view-pill" data-view="desktop">🖥️ Virtual Desktop</button>
+          <button class="view-pill" data-view="terminal">⌨️ PTY Terminal</button>
+          <button class="view-pill" data-view="telemetry">⚡ MCP JSON-RPC</button>
+        </div>
+      </div>
+
       <!-- Simulator Controls -->
       <div class="sim-control-panel">
         <div class="sim-scenario-selector">
-          <label for="scenarioSelect">Evaluation Scenario:</label>
+          <label for="scenarioSelect">Scenario:</label>
           <select id="scenarioSelect" class="form-select">
             <option value="storytold_wordcraft">1. StoryTold WordCraft MCP Document Authoring</option>
             <option value="receipt_processing">2. Financial Invoice Data Parsing & Ledger</option>
@@ -115,21 +138,28 @@
             <option value="error_recovery">4. Fault Injection & Self-Healing Resilience</option>
           </select>
         </div>
+
         <div class="sim-button-group">
-          <button id="simPrevBtn" class="sim-btn" title="Previous Step">⏮ Prev</button>
-          <button id="simPlayBtn" class="sim-btn sim-btn-primary" title="Play / Pause">▶ Auto-Play</button>
-          <button id="simNextBtn" class="sim-btn" title="Next Step">Next ⏭</button>
-          <button id="simResetBtn" class="sim-btn" title="Reset State">↺ Reset</button>
+          <button id="simPrevBtn" class="sim-btn" title="Previous Step (Left Arrow)" aria-label="Previous Step">⏮ Prev</button>
+          <button id="simPlayBtn" class="sim-btn sim-btn-primary" title="Play / Pause (Space)" aria-label="Play or Pause">▶ Auto-Play</button>
+          <button id="simNextBtn" class="sim-btn" title="Next Step (Right Arrow)" aria-label="Next Step">Next ⏭</button>
+          <button id="simResetBtn" class="sim-btn" title="Reset State" aria-label="Reset">↺ Reset</button>
         </div>
-        <div class="sim-progress-badge">
-          Step <span id="simStepCurrent">1</span> of <span id="simStepTotal">5</span>
+
+        <div class="sim-status-indicators">
+          <div class="sim-progress-badge">
+            Step <span id="simStepCurrent">1</span> of <span id="simStepTotal">5</span>
+          </div>
+          <div class="sim-step-progress-track">
+            <div class="sim-step-progress-fill" id="simStepProgressFill"></div>
+          </div>
         </div>
       </div>
 
       <!-- Tri-Pane Live Dashboard -->
-      <div class="tri-pane-grid">
+      <div class="tri-pane-grid" id="triPaneGrid">
         <!-- Pane 1: Terminal / Shell Console -->
-        <div class="pane-card pane-terminal">
+        <div class="pane-card pane-terminal" id="paneTerminal">
           <div class="pane-header">
             <div class="pane-dots">
               <span class="dot dot-red"></span>
@@ -149,7 +179,7 @@
         </div>
 
         <!-- Pane 2: Virtual Desktop Canvas -->
-        <div class="pane-card pane-desktop">
+        <div class="pane-card pane-desktop" id="paneDesktop">
           <div class="pane-header">
             <div class="pane-dots">
               <span class="dot dot-blue"></span>
@@ -190,7 +220,7 @@
         </div>
 
         <!-- Pane 3: MCP & Telemetry Inspector -->
-        <div class="pane-card pane-telemetry">
+        <div class="pane-card pane-telemetry" id="paneTelemetry">
           <div class="pane-header">
             <span class="pane-title">Model Context Protocol (MCP) JSON-RPC</span>
             <span class="pane-badge badge-success">StdIO Pipe</span>
@@ -236,16 +266,18 @@
         </p>
       </div>
 
-      <div class="arch-tabs">
-        <button class="arch-tab active" data-tab="tri-modal">Tri-Modal Routing</button>
-        <button class="arch-tab" data-tab="mcp-bridge">StoryTold & MCP Bridge</button>
-        <button class="arch-tab" data-tab="sandbox">Zero-Trust Sandbox</button>
-        <button class="arch-tab" data-tab="verification">Ground-Truth Assertions</button>
-        <button class="arch-tab" data-tab="guardrails">Security & Guardrails</button>
+      <div class="arch-tabs-wrapper">
+        <div class="arch-tabs" role="tablist">
+          <button class="arch-tab active" data-tab="tri-modal" role="tab" aria-selected="true">Tri-Modal Routing</button>
+          <button class="arch-tab" data-tab="mcp-bridge" role="tab" aria-selected="false">StoryTold & MCP Bridge</button>
+          <button class="arch-tab" data-tab="sandbox" role="tab" aria-selected="false">Zero-Trust Sandbox</button>
+          <button class="arch-tab" data-tab="verification" role="tab" aria-selected="false">Ground-Truth Assertions</button>
+          <button class="arch-tab" data-tab="guardrails" role="tab" aria-selected="false">Security & Guardrails</button>
+        </div>
       </div>
 
       <div class="arch-content-card">
-        <div class="arch-panel active" id="tab-tri-modal">
+        <div class="arch-panel active" id="tab-tri-modal" role="tabpanel">
           <div class="arch-grid">
             <div class="arch-info">
               <h3>Tri-Modal Cognitive Router</h3>
@@ -260,6 +292,10 @@
               </ul>
             </div>
             <div class="arch-code">
+              <div class="code-box-header">
+                <span>router.py</span>
+                <button class="copy-code-btn" data-code="# Cognitive Routing Hierarchy&#10;PRIORITY = {&#10;    'mcp': 1,         # 100% Deterministic, 0 Visual Tokens&#10;    'filesystem': 2,  # Atomic I/O, Safe Quoting&#10;    'shell': 3,       # Batch processing, CLI tools&#10;    'computer': 4     # GUI clicks & visual verification&#10;}">Copy</button>
+              </div>
               <pre><code># Cognitive Routing Hierarchy
 PRIORITY = {
     "mcp": 1,         # 100% Deterministic, 0 Visual Tokens
@@ -271,7 +307,7 @@ PRIORITY = {
           </div>
         </div>
 
-        <div class="arch-panel" id="tab-mcp-bridge">
+        <div class="arch-panel" id="tab-mcp-bridge" role="tabpanel">
           <div class="arch-grid">
             <div class="arch-info">
               <h3>Model Context Protocol (MCP) Bridge</h3>
@@ -285,6 +321,10 @@ PRIORITY = {
               </ul>
             </div>
             <div class="arch-code">
+              <div class="code-box-header">
+                <span>client.py</span>
+                <button class="copy-code-btn" data-code="# MCP Client Tool Call Protocol&#10;res = await mcp_client.call_tool(&#10;    'wordcraft__type_text',&#10;    {&#10;        'text': 'Executive Architecture Summary',&#10;        'paragraph_type': 'heading1'&#10;    }&#10;)&#10;# Returns structured AST state and layout confirmation">Copy</button>
+              </div>
               <pre><code># MCP Client Tool Call Protocol
 res = await mcp_client.call_tool(
     "wordcraft__type_text",
@@ -298,7 +338,7 @@ res = await mcp_client.call_tool(
           </div>
         </div>
 
-        <div class="arch-panel" id="tab-sandbox">
+        <div class="arch-panel" id="tab-sandbox" role="tabpanel">
           <div class="arch-grid">
             <div class="arch-info">
               <h3>Zero-Trust Sandboxed Execution</h3>
@@ -312,6 +352,10 @@ res = await mcp_client.call_tool(
               </ul>
             </div>
             <div class="arch-code">
+              <div class="code-box-header">
+                <span>docker run</span>
+                <button class="copy-code-btn" data-code="docker run -d \&#10;  --name nexus_sandbox_runtime \&#10;  -p 5900:5900 -p 6080:6080 \&#10;  -v ./workspace:/home/sandboxuser/workspace \&#10;  -e DISPLAY=:99 \&#10;  nexus-computer-use-sandbox:latest">Copy</button>
+              </div>
               <pre><code># Launch isolated Docker sandbox container
 docker run -d \
   --name nexus_sandbox_runtime \
@@ -323,7 +367,7 @@ docker run -d \
           </div>
         </div>
 
-        <div class="arch-panel" id="tab-verification">
+        <div class="arch-panel" id="tab-verification" role="tabpanel">
           <div class="arch-grid">
             <div class="arch-info">
               <h3>Ground-Truth Multi-Modal Verification</h3>
@@ -337,6 +381,10 @@ docker run -d \
               </ul>
             </div>
             <div class="arch-code">
+              <div class="code-box-header">
+                <span>verifier.py</span>
+                <button class="copy-code-btn" data-code="verifier = MultiModalVerifier([&#10;    FileExistsAssertion('reports/summary.json'),&#10;    FileJsonAssertion('reports/summary.json', {'total': 412.50}),&#10;    MCPStateAssertion('wordcraft', 'inspect_document', {}, check_paragraphs)&#10;])&#10;report = await verifier.verify(sandbox, mcp_manager)">Copy</button>
+              </div>
               <pre><code>verifier = MultiModalVerifier([
     FileExistsAssertion("reports/summary.json"),
     FileJsonAssertion("reports/summary.json", {"total": 412.50}),
@@ -347,7 +395,7 @@ report = await verifier.verify(sandbox, mcp_manager)</code></pre>
           </div>
         </div>
 
-        <div class="arch-panel" id="tab-guardrails">
+        <div class="arch-panel" id="tab-guardrails" role="tabpanel">
           <div class="arch-grid">
             <div class="arch-info">
               <h3>Production Safety & Guardrails</h3>
@@ -362,6 +410,10 @@ report = await verifier.verify(sandbox, mcp_manager)</code></pre>
               </ul>
             </div>
             <div class="arch-code">
+              <div class="code-box-header">
+                <span>loop_detector.py</span>
+                <button class="copy-code-btn" data-code="# Automatic intervention on cyclic behavior&#10;is_loop, warning = loop_detector.record_step(&#10;    tool_name='computer',&#10;    tool_args={'action': 'left_click', 'coordinate': [200, 300]}&#10;)&#10;if is_loop:&#10;    # Force agent to pivot strategy">Copy</button>
+              </div>
               <pre><code># Automatic intervention on cyclic behavior
 is_loop, warning = loop_detector.record_step(
     tool_name="computer",
@@ -380,9 +432,9 @@ if is_loop:
   <section id="builder" class="section builder-section">
     <div class="section-container">
       <div class="section-header">
-        <h2 class="section-title">Interactive Harness Configuration Builder</h2>
+        <h2 class="section-title">Interactive Configuration Builder</h2>
         <p class="section-subtitle">
-          Configure your deployment backend, LLM model, MCP servers, and safety guardrails. Export ready-to-run YAML or Python configs.
+          Configure your deployment backend, LLM model, MCP servers, and safety guardrails. Export ready-to-run YAML, Python, or CLI commands.
         </p>
       </div>
 
@@ -391,8 +443,8 @@ if is_loop:
           <div class="form-group">
             <label class="form-label">Sandbox Backend:</label>
             <div class="radio-group">
-              <label class="radio-btn"><input type="radio" name="cfgSandbox" value="docker" checked> Docker Sandbox</label>
-              <label class="radio-btn"><input type="radio" name="cfgSandbox" value="local"> Local Workspace</label>
+              <label class="radio-btn"><input type="radio" name="cfgSandbox" value="docker" checked> Docker Sandbox (Xvfb Virtual Display)</label>
+              <label class="radio-btn"><input type="radio" name="cfgSandbox" value="local"> Local Isolated Workspace</label>
             </div>
           </div>
 
@@ -419,11 +471,11 @@ if is_loop:
             <label class="form-label">Guardrails & Safety Limits:</label>
             <div class="range-field">
               <span>Max Step Budget: <strong id="cfgStepVal">30</strong> steps</span>
-              <input type="range" id="cfgMaxSteps" min="5" max="100" value="30" class="form-range">
+              <input type="range" id="cfgMaxSteps" min="5" max="100" value="30" class="form-range" aria-label="Max Step Budget">
             </div>
             <div class="range-field">
               <span>Max USD Spend: $<strong id="cfgCostVal">5.00</strong></span>
-              <input type="range" id="cfgMaxCost" min="1" max="25" value="5" class="form-range">
+              <input type="range" id="cfgMaxCost" min="1" max="25" value="5" class="form-range" aria-label="Max Cost Budget">
             </div>
             <div class="checkbox-group mt-2">
               <label><input type="checkbox" id="cfgInjectionDefense" checked> Visual & Text Prompt Injection Sanitizer</label>
@@ -437,8 +489,9 @@ if is_loop:
             <div class="preview-tabs">
               <button class="preview-tab active" id="tabYaml">nexus_config.yaml</button>
               <button class="preview-tab" id="tabPython">main.py</button>
+              <button class="preview-tab" id="tabCli">CLI Command</button>
             </div>
-            <button class="btn btn-sm btn-outline" id="copyConfigBtn">📋 Copy</button>
+            <button class="btn btn-sm btn-outline" id="copyConfigBtn" aria-label="Copy Configuration">📋 Copy</button>
           </div>
           <pre class="preview-code"><code id="configOutput"># Generated Config will appear here</code></pre>
         </div>
@@ -463,7 +516,7 @@ if is_loop:
             <span class="badge badge-success">-84% Reduction</span>
           </div>
           <div class="chart-body">
-            <canvas id="tokenChart"></canvas>
+            <canvas id="tokenChart" aria-label="Token Comparison Chart" role="img"></canvas>
           </div>
         </div>
 
@@ -473,7 +526,7 @@ if is_loop:
             <span class="badge badge-success">24x Acceleration</span>
           </div>
           <div class="chart-body">
-            <canvas id="latencyChart"></canvas>
+            <canvas id="latencyChart" aria-label="Latency Comparison Chart" role="img"></canvas>
           </div>
         </div>
       </div>
@@ -548,6 +601,10 @@ if is_loop:
           <div class="qs-num">1</div>
           <h3>Install with uv</h3>
           <p>Clone the repository and install dependencies in an isolated virtual environment:</p>
+          <div class="code-box-header">
+            <span>bash</span>
+            <button class="copy-code-btn" data-code="git clone https://github.com/subasah/computer-use-harness.git&#10;cd computer-use-harness&#10;uv venv && source .venv/bin/activate&#10;uv pip install -e '.[dev]'">Copy</button>
+          </div>
           <pre><code>git clone https://github.com/subasah/computer-use-harness.git
 cd computer-use-harness
 uv venv && source .venv/bin/activate
@@ -558,6 +615,10 @@ uv pip install -e ".[dev]"</code></pre>
           <div class="qs-num">2</div>
           <h3>Configure Environment</h3>
           <p>Copy the environment template and configure your provider API key:</p>
+          <div class="code-box-header">
+            <span>bash</span>
+            <button class="copy-code-btn" data-code="cp .env.example .env&#10;# Set ANTHROPIC_API_KEY=your_key or use offline mock">Copy</button>
+          </div>
           <pre><code>cp .env.example .env
 # Set ANTHROPIC_API_KEY=your_key or use offline mock</code></pre>
         </div>
@@ -566,6 +627,10 @@ uv pip install -e ".[dev]"</code></pre>
           <div class="qs-num">3</div>
           <h3>Run Task or Benchmark</h3>
           <p>Execute any task or run the full evaluation suite with rich telemetry:</p>
+          <div class="code-box-header">
+            <span>bash</span>
+            <button class="copy-code-btn" data-code="nexus eval --output results.md&#10;nexus mcp&#10;nexus run -t 'Create memo in WordCraft' -p mock">Copy</button>
+          </div>
           <pre><code># Run evaluation suite
 nexus eval --output results.md
 
@@ -583,17 +648,24 @@ nexus run -t "Create memo in WordCraft" -p mock</code></pre>
   <footer class="footer">
     <div class="footer-container">
       <div class="footer-brand">
-        <strong>NexusCUH</strong> — Designed & Engineered by <a href="https://github.com/subasah" target="_blank">Suba Sah</a>
+        <strong>NexusCUH</strong> — Designed & Engineered by <a href="https://github.com/subasah" target="_blank" rel="noopener noreferrer">Suba Sah</a>
       </div>
       <div class="footer-links">
-        <a href="https://github.com/subasah/computer-use-harness" target="_blank">GitHub Repository</a>
-        <a href="https://github.com/storytold/" target="_blank">StoryTold Ecosystem</a>
+        <a href="https://github.com/subasah/computer-use-harness" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+        <a href="https://github.com/storytold/" target="_blank" rel="noopener noreferrer">StoryTold Ecosystem</a>
       </div>
       <div class="footer-copy">
         Apache-2.0 Licensed. Designed for research and production computer-use evaluation.
       </div>
     </div>
   </footer>
+
+  <!-- Floating Back to Top Pill -->
+  <button class="back-to-top" id="backToTop" aria-label="Back to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+  </button>
 
   <script src="app.js"></script>
 </body>

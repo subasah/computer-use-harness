@@ -1,16 +1,70 @@
 /**
  * NexusCUH Interactive Web Dashboard & Simulator Engine
+ * Responsive, accessible, and high-performance client script.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  initScrollProgress();
+  initMobileNav();
   initSimulator();
   initArchTabs();
   initConfigBuilder();
+  initCopyCodeButtons();
+  initBackToTop();
   initCharts();
 });
 
 /* ==============================================================================
- * 1. LIVE EXECUTION SIMULATOR
+ * 1. READING PROGRESS BAR
+ * ============================================================================== */
+
+function initScrollProgress() {
+  const progressBar = document.getElementById('progressBar');
+  if (!progressBar) return;
+
+  window.addEventListener('scroll', () => {
+    const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = totalHeight > 0 ? (window.scrollY / totalHeight) * 100 : 0;
+    progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+  }, { passive: true });
+}
+
+/* ==============================================================================
+ * 2. MOBILE NAVIGATION DRAWER
+ * ============================================================================== */
+
+function initMobileNav() {
+  const menuBtn = document.getElementById('mobileMenuBtn');
+  const navLinks = document.getElementById('navLinks');
+  if (!menuBtn || !navLinks) return;
+
+  menuBtn.addEventListener('click', () => {
+    const isOpen = navLinks.classList.toggle('open');
+    menuBtn.classList.toggle('open', isOpen);
+    menuBtn.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  // Close drawer when any nav link is tapped
+  navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      navLinks.classList.remove('open');
+      menuBtn.classList.remove('open');
+      menuBtn.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  // Close with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && navLinks.classList.contains('open')) {
+      navLinks.classList.remove('open');
+      menuBtn.classList.remove('open');
+      menuBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
+
+/* ==============================================================================
+ * 3. LIVE EXECUTION SIMULATOR & PANE VIEW SWITCHER
  * ============================================================================== */
 
 const SCENARIOS = {
@@ -136,6 +190,76 @@ const SCENARIOS = {
       mcp: `{\n  "assertion": "FileJsonAssertion",\n  "path": "reports/accounting_summary.json"\n}`,
       tokens: { prompt: 410, visual: "0", duration: "6.2ms", groundTruth: "TASK_PASSED_100%" }
     }
+  ],
+  gui_desktop_form: [
+    {
+      step: 1,
+      cmd: "xdotool search --name 'Form' windowactivate",
+      stdout: "Found window ID 0x2400001 (Title: 'Desktop Submission Portal')",
+      cursor: { x: 100, y: 90 },
+      winTitle: "Desktop Submission Portal",
+      doc: { h1: "Portal Status Form", h2: "Pending Input", p: "Form ready for agent submission." },
+      router: "Level 4: Desktop GUI Tool (Set-of-Marks Overlay)",
+      mcp: `{\n  "action": "screenshot",\n  "som_tags_detected": 3\n}`,
+      tokens: { prompt: 420, visual: "1,600 (Initial Frame)", duration: "210.4ms", groundTruth: "WINDOW_READY" }
+    },
+    {
+      step: 2,
+      cmd: "xdotool mousemove 200 150 click 1 && xdotool type 'SUBMITTED_STATUS=CONFIRMED'",
+      stdout: "Clicked input box at (200, 150). Typed confirmation text.",
+      cursor: { x: 200, y: 150 },
+      winTitle: "Desktop Submission Portal — Focused",
+      doc: { h1: "Portal Status Form", h2: "Typing Entry", p: "Status: SUBMITTED_STATUS=CONFIRMED" },
+      router: "Level 4: Desktop GUI Tool (Frame Differ Active)",
+      mcp: `{\n  "action": "left_click",\n  "coordinate": [200, 150]\n}`,
+      tokens: { prompt: 490, visual: "0 (Frame Omitted: Unchanged)", duration: "18.2ms", groundTruth: "TYPED_OK" }
+    },
+    {
+      step: 3,
+      cmd: "echo 'SUBMITTED_STATUS=CONFIRMED' > gui_submission.log && grep -q 'CONFIRMED' gui_submission.log",
+      stdout: "Status verified in log.\n[VERIFIER] Ground-Truth Assertion PASSED.",
+      cursor: { x: 220, y: 220 },
+      winTitle: "Desktop Submission Portal — Confirmed",
+      doc: { h1: "Portal Status Form", h2: "Completed", p: "Submission recorded and verified with ground truth." },
+      router: "Ground-Truth Verification Engine",
+      mcp: `{\n  "assertion": "FileContentRegexAssertion",\n  "pattern": "SUBMITTED_STATUS=CONFIRMED"\n}`,
+      tokens: { prompt: 540, visual: "0", duration: "12.0ms", groundTruth: "TASK_PASSED_100%" }
+    }
+  ],
+  error_recovery: [
+    {
+      step: 1,
+      cmd: "echo 'TEST' >> protected/config.env",
+      stdout: "bash: protected/config.env: Permission denied (Exit Code: 1)",
+      cursor: { x: 80, y: 80 },
+      winTitle: "Terminal — Error Detected",
+      doc: { h1: "Self-Healing Diagnostic", h2: "Fault Injected", p: "Read-only permission error on protected/config.env" },
+      router: "Fault Tolerance Subsystem",
+      mcp: `{\n  "error_handler": "detect_permission_failure",\n  "target": "protected/config.env"\n}`,
+      tokens: { prompt: 210, visual: "0", duration: "11.5ms", groundTruth: "ERROR_DIAGNOSED" }
+    },
+    {
+      step: 2,
+      cmd: "ls -l protected/config.env && chmod u+w protected/config.env",
+      stdout: "-r--r--r-- 1 sandboxuser staff 21 protected/config.env\nPermissions adjusted: mode changed to 0644.",
+      cursor: { x: 140, y: 140 },
+      winTitle: "Terminal — Recovering",
+      doc: { h1: "Self-Healing Diagnostic", h2: "Fixing Permissions", p: "Temporarily enabled write permissions." },
+      router: "Level 3: Shell Recovery Protocol",
+      mcp: `{\n  "tool": "shell",\n  "command": "chmod u+w protected/config.env"\n}`,
+      tokens: { prompt: 300, visual: "0", duration: "8.2ms", groundTruth: "CHMOD_OK" }
+    },
+    {
+      step: 3,
+      cmd: "echo 'RECOVERY_COMPLETED=TRUE' >> protected/config.env && chmod 444 protected/config.env",
+      stdout: "Successfully appended recovery token and restored read-only lock.\n[VERIFIER] Ground-Truth Assertion PASSED.",
+      cursor: { x: 200, y: 200 },
+      winTitle: "Terminal — Self-Healed",
+      doc: { h1: "Self-Healing Diagnostic", h2: "Healed & Verified", p: "Recovery completed and re-locked." },
+      router: "Ground-Truth Verification Engine",
+      mcp: `{\n  "assertion": "FileContentRegexAssertion",\n  "pattern": "RECOVERY_COMPLETED=TRUE"\n}`,
+      tokens: { prompt: 380, visual: "0", duration: "14.3ms", groundTruth: "TASK_PASSED_100%" }
+    }
   ]
 };
 
@@ -152,14 +276,14 @@ function initSimulator() {
   const resetBtn = document.getElementById('simResetBtn');
   const somToggle = document.getElementById('toggleSOM');
 
-  scenarioSelect.addEventListener('change', (e) => {
+  scenarioSelect?.addEventListener('change', (e) => {
     currentScenarioKey = e.target.value in SCENARIOS ? e.target.value : 'storytold_wordcraft';
     currentStepIdx = 0;
     stopAutoPlay();
     renderStep();
   });
 
-  prevBtn.addEventListener('click', () => {
+  prevBtn?.addEventListener('click', () => {
     stopAutoPlay();
     if (currentStepIdx > 0) {
       currentStepIdx--;
@@ -167,7 +291,7 @@ function initSimulator() {
     }
   });
 
-  nextBtn.addEventListener('click', () => {
+  nextBtn?.addEventListener('click', () => {
     stopAutoPlay();
     const scenario = SCENARIOS[currentScenarioKey];
     if (currentStepIdx < scenario.length - 1) {
@@ -176,7 +300,7 @@ function initSimulator() {
     }
   });
 
-  playBtn.addEventListener('click', () => {
+  playBtn?.addEventListener('click', () => {
     if (isPlaying) {
       stopAutoPlay();
     } else {
@@ -184,25 +308,83 @@ function initSimulator() {
     }
   });
 
-  resetBtn.addEventListener('click', () => {
+  resetBtn?.addEventListener('click', () => {
     stopAutoPlay();
     currentStepIdx = 0;
     renderStep();
   });
 
-  somToggle.addEventListener('change', (e) => {
+  somToggle?.addEventListener('change', (e) => {
     const tags = document.querySelectorAll('.som-tag');
     tags.forEach(t => t.style.display = e.target.checked ? 'block' : 'none');
+  });
+
+  // Simulator View Switcher Filter Pills (Responsive Mode)
+  initViewSwitcher();
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    // Only if not typing in an input
+    if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+    if (e.key === 'ArrowRight') {
+      nextBtn?.click();
+    } else if (e.key === 'ArrowLeft') {
+      prevBtn?.click();
+    } else if (e.key === ' ' && e.target === document.body) {
+      e.preventDefault();
+      playBtn?.click();
+    }
   });
 
   renderStep();
 }
 
+function initViewSwitcher() {
+  const pills = document.querySelectorAll('.view-pill');
+  const grid = document.getElementById('triPaneGrid');
+  const paneTerminal = document.getElementById('paneTerminal');
+  const paneDesktop = document.getElementById('paneDesktop');
+  const paneTelemetry = document.getElementById('paneTelemetry');
+
+  pills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      pills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+
+      const view = pill.getAttribute('data-view');
+
+      // Reset classes
+      [paneTerminal, paneDesktop, paneTelemetry].forEach(pane => {
+        pane.classList.remove('is-hidden', 'is-focused');
+      });
+
+      if (view === 'all') {
+        // Show all
+      } else if (view === 'desktop') {
+        paneTerminal.classList.add('is-hidden');
+        paneTelemetry.classList.add('is-hidden');
+        paneDesktop.classList.add('is-focused');
+      } else if (view === 'terminal') {
+        paneDesktop.classList.add('is-hidden');
+        paneTelemetry.classList.add('is-hidden');
+        paneTerminal.classList.add('is-focused');
+      } else if (view === 'telemetry') {
+        paneDesktop.classList.add('is-hidden');
+        paneTerminal.classList.add('is-hidden');
+        paneTelemetry.classList.add('is-focused');
+      }
+    });
+  });
+}
+
 function startAutoPlay() {
   isPlaying = true;
   const playBtn = document.getElementById('simPlayBtn');
-  playBtn.textContent = '⏸ Pause';
-  playBtn.classList.add('sim-btn-active');
+  if (playBtn) {
+    playBtn.textContent = '⏸ Pause';
+    playBtn.classList.add('sim-btn-active');
+  }
 
   playInterval = setInterval(() => {
     const scenario = SCENARIOS[currentScenarioKey];
@@ -219,55 +401,88 @@ function stopAutoPlay() {
   isPlaying = false;
   if (playInterval) clearInterval(playInterval);
   const playBtn = document.getElementById('simPlayBtn');
-  playBtn.textContent = '▶ Auto-Play';
-  playBtn.classList.remove('sim-btn-active');
+  if (playBtn) {
+    playBtn.textContent = '▶ Auto-Play';
+    playBtn.classList.remove('sim-btn-active');
+  }
 }
 
 function renderStep() {
   const scenario = SCENARIOS[currentScenarioKey];
   const stepData = scenario[currentStepIdx];
 
-  document.getElementById('simStepCurrent').textContent = currentStepIdx + 1;
-  document.getElementById('simStepTotal').textContent = scenario.length;
+  const currentSpan = document.getElementById('simStepCurrent');
+  const totalSpan = document.getElementById('simStepTotal');
+  const fillTrack = document.getElementById('simStepProgressFill');
 
-  // Terminal
-  document.getElementById('simTermCmd').textContent = stepData.cmd;
-  document.getElementById('simTermStdout').textContent = stepData.stdout;
+  if (currentSpan) currentSpan.textContent = currentStepIdx + 1;
+  if (totalSpan) totalSpan.textContent = scenario.length;
+  if (fillTrack) {
+    const pct = ((currentStepIdx + 1) / scenario.length) * 100;
+    fillTrack.style.width = `${pct}%`;
+  }
 
-  // Desktop Window & Cursor
-  document.getElementById('simWinTitle').textContent = stepData.winTitle;
-  document.getElementById('docH1').textContent = stepData.doc.h1;
-  document.getElementById('docH2').textContent = stepData.doc.h2;
-  document.getElementById('docP').textContent = stepData.doc.p;
+  // Terminal Output
+  const termCmd = document.getElementById('simTermCmd');
+  const termStdout = document.getElementById('simTermStdout');
+  if (termCmd) termCmd.textContent = stepData.cmd;
+  if (termStdout) termStdout.textContent = stepData.stdout;
 
+  // Desktop Canvas & Window
+  const winTitle = document.getElementById('simWinTitle');
+  const docH1 = document.getElementById('docH1');
+  const docH2 = document.getElementById('docH2');
+  const docP = document.getElementById('docP');
+
+  if (winTitle) winTitle.textContent = stepData.winTitle;
+  if (docH1) docH1.textContent = stepData.doc.h1;
+  if (docH2) docH2.textContent = stepData.doc.h2;
+  if (docP) docP.textContent = stepData.doc.p;
+
+  // Mouse Cursor positioning & Ripple animation
   const cursor = document.getElementById('simCursor');
-  cursor.style.top = stepData.cursor.y + 'px';
-  cursor.style.left = stepData.cursor.x + 'px';
+  if (cursor) {
+    cursor.style.top = `${stepData.cursor.y}px`;
+    cursor.style.left = `${stepData.cursor.x}px`;
+  }
 
   const ripple = document.getElementById('clickRipple');
-  ripple.classList.remove('animate');
-  void ripple.offsetWidth; // Trigger reflow
-  ripple.classList.add('animate');
+  if (ripple) {
+    ripple.classList.remove('animate');
+    void ripple.offsetWidth; // Trigger reflow
+    ripple.classList.add('animate');
+  }
 
-  // Telemetry & MCP
-  document.getElementById('simRouterDecision').textContent = stepData.router;
-  document.getElementById('simMcpPacket').textContent = stepData.mcp;
-  document.getElementById('simPromptTokens').textContent = stepData.tokens.prompt;
-  document.getElementById('simVisualTokens').textContent = stepData.tokens.visual;
-  document.getElementById('simDuration').textContent = stepData.tokens.duration;
-  document.getElementById('simGroundTruth').textContent = stepData.tokens.groundTruth;
+  // Telemetry & MCP inspector
+  const routerDecision = document.getElementById('simRouterDecision');
+  const mcpPacket = document.getElementById('simMcpPacket');
+  const promptTokens = document.getElementById('simPromptTokens');
+  const visualTokens = document.getElementById('simVisualTokens');
+  const duration = document.getElementById('simDuration');
+  const groundTruth = document.getElementById('simGroundTruth');
+
+  if (routerDecision) routerDecision.textContent = stepData.router;
+  if (mcpPacket) mcpPacket.textContent = stepData.mcp;
+  if (promptTokens) promptTokens.textContent = stepData.tokens.prompt;
+  if (visualTokens) visualTokens.textContent = stepData.tokens.visual;
+  if (duration) duration.textContent = stepData.tokens.duration;
+  if (groundTruth) groundTruth.textContent = stepData.tokens.groundTruth;
 }
 
 /* ==============================================================================
- * 2. ARCHITECTURE TABS
+ * 4. ARCHITECTURE TABS
  * ============================================================================== */
 
 function initArchTabs() {
   const tabs = document.querySelectorAll('.arch-tab');
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
+      tabs.forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
       tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
 
       const targetId = `tab-${tab.getAttribute('data-tab')}`;
       document.querySelectorAll('.arch-panel').forEach(p => p.classList.remove('active'));
@@ -278,7 +493,7 @@ function initArchTabs() {
 }
 
 /* ==============================================================================
- * 3. CONFIGURATION BUILDER
+ * 5. INTERACTIVE CONFIGURATION BUILDER
  * ============================================================================== */
 
 function initConfigBuilder() {
@@ -297,53 +512,75 @@ function initConfigBuilder() {
   const copyBtn = document.getElementById('copyConfigBtn');
   const tabYaml = document.getElementById('tabYaml');
   const tabPython = document.getElementById('tabPython');
+  const tabCli = document.getElementById('tabCli');
 
   let activeFormat = 'yaml';
 
-  maxSteps.addEventListener('input', () => {
-    stepVal.textContent = maxSteps.value;
+  maxSteps?.addEventListener('input', () => {
+    if (stepVal) stepVal.textContent = maxSteps.value;
     updateConfig();
   });
 
-  maxCost.addEventListener('input', () => {
-    costVal.textContent = parseFloat(maxCost.value).toFixed(2);
+  maxCost?.addEventListener('input', () => {
+    if (costVal) costVal.textContent = parseFloat(maxCost.value).toFixed(2);
     updateConfig();
   });
 
   [...sandboxRadios, providerSelect, mcpStorytold, mcpFilesystem, mcpBrowser, injDefense, frameDiffing].forEach(el => {
-    el.addEventListener('change', updateConfig);
+    el?.addEventListener('change', updateConfig);
   });
 
-  tabYaml.addEventListener('click', () => {
+  tabYaml?.addEventListener('click', () => {
     activeFormat = 'yaml';
+    [tabYaml, tabPython, tabCli].forEach(t => t?.classList.remove('active'));
     tabYaml.classList.add('active');
-    tabPython.classList.remove('active');
     updateConfig();
   });
 
-  tabPython.addEventListener('click', () => {
+  tabPython?.addEventListener('click', () => {
     activeFormat = 'python';
+    [tabYaml, tabPython, tabCli].forEach(t => t?.classList.remove('active'));
     tabPython.classList.add('active');
-    tabYaml.classList.remove('active');
     updateConfig();
   });
 
-  copyBtn.addEventListener('click', () => {
-    const code = document.getElementById('configOutput').textContent;
+  tabCli?.addEventListener('click', () => {
+    activeFormat = 'cli';
+    [tabYaml, tabPython, tabCli].forEach(t => t?.classList.remove('active'));
+    tabCli.classList.add('active');
+    updateConfig();
+  });
+
+  copyBtn?.addEventListener('click', () => {
+    const code = document.getElementById('configOutput')?.textContent || '';
     navigator.clipboard.writeText(code).then(() => {
       copyBtn.textContent = '✔ Copied!';
-      setTimeout(() => copyBtn.textContent = '📋 Copy', 2000);
+      copyBtn.classList.add('btn-copied');
+      setTimeout(() => {
+        copyBtn.textContent = '📋 Copy';
+        copyBtn.classList.remove('btn-copied');
+      }, 2000);
     });
   });
 
   function updateConfig() {
-    const sandbox = document.querySelector('input[name="cfgSandbox"]:checked').value;
-    const [provider, model] = providerSelect.value.split(':');
-    const steps = maxSteps.value;
-    const cost = maxCost.value;
+    const sandboxEl = document.querySelector('input[name="cfgSandbox"]:checked');
+    const sandbox = sandboxEl ? sandboxEl.value : 'docker';
+    const providerVal = providerSelect?.value || 'anthropic:claude-3-7-sonnet-20250219';
+    const [provider, model] = providerVal.split(':');
+    const steps = maxSteps?.value || '30';
+    const cost = maxCost?.value || '5';
+    const hasStorytold = mcpStorytold?.checked ?? true;
+    const hasFilesystem = mcpFilesystem?.checked ?? true;
+    const hasBrowser = mcpBrowser?.checked ?? false;
+    const hasInj = injDefense?.checked ?? true;
+    const hasDiff = frameDiffing?.checked ?? true;
+
+    const outputEl = document.getElementById('configOutput');
+    if (!outputEl) return;
 
     if (activeFormat === 'yaml') {
-      const yaml = `# Nexus Computer Use Harness Configuration
+      outputEl.textContent = `# Nexus Computer Use Harness Configuration
 version: "0.1.0"
 provider: "${provider}"
 model_name: "${model}"
@@ -360,21 +597,20 @@ sandbox:
 
 mcp:
   auto_discovery: true
-  storytold_enabled: ${mcpStorytold.checked}
-  filesystem_enabled: ${mcpFilesystem.checked}
-  browser_enabled: ${mcpBrowser.checked}
+  storytold_enabled: ${hasStorytold}
+  filesystem_enabled: ${hasFilesystem}
+  browser_enabled: ${hasBrowser}
 
 guardrails:
   max_steps: ${steps}
   max_cost_usd: ${cost}.00
   command_timeout_seconds: 30
-  prompt_injection_defense: ${injDefense.checked}
-  frame_diffing: ${frameDiffing.checked}
+  prompt_injection_defense: ${hasInj}
+  frame_diffing: ${hasDiff}
   loop_detection_window: 4
 `;
-      document.getElementById('configOutput').textContent = yaml;
-    } else {
-      const py = `import asyncio
+    } else if (activeFormat === 'python') {
+      outputEl.textContent = `import asyncio
 from harness import HarnessConfig, AgentOrchestrator
 from harness.config import SandboxType, LLMProviderType
 
@@ -385,7 +621,7 @@ async def main():
     config.model_name = "${model}"
     config.guardrails.max_steps = ${steps}
     config.guardrails.max_cost_usd = ${cost}.00
-    config.mcp.storytold_enabled = ${mcpStorytold.checked}
+    config.mcp.storytold_enabled = ${hasStorytold}
 
     orchestrator = AgentOrchestrator(config=config)
     await orchestrator.initialize()
@@ -399,7 +635,14 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 `;
-      document.getElementById('configOutput').textContent = py;
+    } else {
+      outputEl.textContent = `# Run via NexusCUH CLI
+nexus run \\
+  --task "Process data and verify with ground truth" \\
+  --provider ${provider} \\
+  --sandbox ${sandbox} \\
+  --workspace ./workspace
+`;
     }
   }
 
@@ -407,10 +650,54 @@ if __name__ == "__main__":
 }
 
 /* ==============================================================================
- * 4. PERFORMANCE CHARTS
+ * 6. COPY CODE BUTTONS FOR ALL CODE BLOCKS
+ * ============================================================================== */
+
+function initCopyCodeButtons() {
+  document.querySelectorAll('.copy-code-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const code = btn.getAttribute('data-code');
+      if (!code) return;
+      navigator.clipboard.writeText(code).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = '✔ Copied';
+        setTimeout(() => {
+          btn.textContent = originalText;
+        }, 1800);
+      });
+    });
+  });
+}
+
+/* ==============================================================================
+ * 7. BACK TO TOP BUTTON
+ * ============================================================================== */
+
+function initBackToTop() {
+  const btn = document.getElementById('backToTop');
+  if (!btn) return;
+
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 400) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  }, { passive: true });
+
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
+/* ==============================================================================
+ * 8. PERFORMANCE CHARTS (RESPONSIVE CHART.JS)
  * ============================================================================== */
 
 function initCharts() {
+  const isMobile = window.innerWidth < 640;
+  const fontSize = isMobile ? 10 : 12;
+
   // Chart 1: Token Usage Comparison
   const tokenCtx = document.getElementById('tokenChart');
   if (tokenCtx) {
@@ -422,16 +709,18 @@ function initCharts() {
           {
             label: 'Pure GUI (Naive Vision)',
             data: [11200, 14500, 8900, 12800],
-            backgroundColor: 'rgba(239, 68, 68, 0.7)',
+            backgroundColor: 'rgba(239, 68, 68, 0.75)',
             borderColor: '#ef4444',
-            borderWidth: 1
+            borderWidth: 1,
+            borderRadius: 4
           },
           {
             label: 'NexusCUH (Hybrid MCP + Shell)',
             data: [380, 720, 1850, 610],
-            backgroundColor: 'rgba(99, 102, 241, 0.85)',
+            backgroundColor: 'rgba(99, 102, 241, 0.9)',
             borderColor: '#6366f1',
-            borderWidth: 1
+            borderWidth: 1,
+            borderRadius: 4
           }
         ]
       },
@@ -439,11 +728,38 @@ function initCharts() {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { labels: { color: '#94a3b8' } }
+          legend: {
+            position: 'top',
+            labels: {
+              color: '#94a3b8',
+              font: { size: fontSize, family: "'Inter', sans-serif" },
+              boxWidth: 12
+            }
+          },
+          tooltip: {
+            backgroundColor: '#0f1422',
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1,
+            titleColor: '#f8fafc',
+            bodyColor: '#cbd5e1'
+          }
         },
         scales: {
-          x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-          y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+          x: {
+            ticks: {
+              color: '#94a3b8',
+              font: { size: fontSize },
+              maxRotation: isMobile ? 35 : 0
+            },
+            grid: { color: 'rgba(255,255,255,0.05)' }
+          },
+          y: {
+            ticks: {
+              color: '#94a3b8',
+              font: { size: fontSize }
+            },
+            grid: { color: 'rgba(255,255,255,0.05)' }
+          }
         }
       }
     });
@@ -455,21 +771,23 @@ function initCharts() {
     new Chart(latencyCtx, {
       type: 'bar',
       data: {
-        labels: ['New Doc', 'Insert Heading', 'Insert Body', 'Save File', 'Parity Check'],
+        labels: ['New Doc', 'Insert Head', 'Insert Body', 'Save File', 'Parity Check'],
         datasets: [
           {
-            label: 'GUI Coordinate Clicks (s)',
+            label: 'GUI Clicks (s)',
             data: [4.2, 3.8, 5.1, 4.5, 3.9],
-            backgroundColor: 'rgba(245, 158, 11, 0.7)',
+            backgroundColor: 'rgba(245, 158, 11, 0.75)',
             borderColor: '#f59e0b',
-            borderWidth: 1
+            borderWidth: 1,
+            borderRadius: 4
           },
           {
-            label: 'StoryTold MCP Tool Call (s)',
+            label: 'StoryTold MCP (s)',
             data: [0.012, 0.015, 0.014, 0.019, 0.009],
-            backgroundColor: 'rgba(16, 185, 129, 0.85)',
+            backgroundColor: 'rgba(16, 185, 129, 0.9)',
             borderColor: '#10b981',
-            borderWidth: 1
+            borderWidth: 1,
+            borderRadius: 4
           }
         ]
       },
@@ -477,13 +795,37 @@ function initCharts() {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { labels: { color: '#94a3b8' } }
+          legend: {
+            position: 'top',
+            labels: {
+              color: '#94a3b8',
+              font: { size: fontSize, family: "'Inter', sans-serif" },
+              boxWidth: 12
+            }
+          },
+          tooltip: {
+            backgroundColor: '#0f1422',
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1,
+            titleColor: '#f8fafc',
+            bodyColor: '#cbd5e1'
+          }
         },
         scales: {
-          x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          x: {
+            ticks: {
+              color: '#94a3b8',
+              font: { size: fontSize },
+              maxRotation: isMobile ? 35 : 0
+            },
+            grid: { color: 'rgba(255,255,255,0.05)' }
+          },
           y: {
             type: 'logarithmic',
-            ticks: { color: '#94a3b8' },
+            ticks: {
+              color: '#94a3b8',
+              font: { size: fontSize }
+            },
             grid: { color: 'rgba(255,255,255,0.05)' }
           }
         }
